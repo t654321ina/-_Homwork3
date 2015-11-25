@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style type="text/css" >
+    body {
+      display: block;
+      margin: 0px;
+      overflow: hidden;
+      padding: 0px;
+    }
+    #chart{
+      width:100% ;
+      height:200px ;
+      font-size:17px;
+      font-family: fantasy;
+      line-height:10px;
+      word-spacing:5px; 
+      top:80%;
+      left:25px;
+      position: fixed;
+      margin: 0px;
+      padding: 0px;
+    }
+  </style>
+  <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+  <script type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
+  <script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
+</head>
+<body>
+  <div id = "container"></div>
+  <div id = "chart">
+    <p id = "country" style ="font-size:20px;font-weight:900; color:#FF6363; "></p>
+    <p id = "birth"></p>
+    <p id = "death"></p>
+  </div>
+  <script type="text/javascript">
+    var height = window.innerHeight;
+    var width = window.innerWidth;
+    var svg = d3.select('#container').append('svg');
+
+    d3.json("world-countries.json", function(data) {
+      
+      //把hdi2013資料input進來 => 存成 hdi2013
+      d3.csv('hdi2013.csv' , function(hdi2013){
+      
+        /* Antarctica will not shown on the map */
+        var features = _.filter(data.features, function(value, key) {
+          return value.properties.name != 'Antarctica';
+        });
+
+        var projection = d3.geo.mercator();
+        var oldScala = projection.scale();
+        var oldTranslate = projection.translate();
+
+        xy = projection.scale(oldScala * (width / oldTranslate[0] / 2) * 0.95)
+          .translate([width / 2, height / 2]);
+         
+        path = d3.geo.path().projection(xy);
+
+        svg.attr('width', width).attr('height', height);
+        svg.selectAll('path').data(features).enter().append('svg:path')
+          .attr('d', path)
+          .on('mouseover', function(data) {
+            d3.select(this).attr('fill', 'rgba(2,2,139,0.61)');
+              
+            $("#country").text(function(){
+              return " Country : "+ data.properties.name ;
+            });
+            $("#birth").text(function(){
+              if (data.Birth == "")
+                return " Birth rate : Sorry , we don't have data." ;
+              else  
+                return " Birth rate : "+ data.Birth + " (Births/1,000 population)";
+            })
+            $("#death").text(function(){
+              if (data.Death == "")
+                return " Death rate : Sorry , we don't have data." ;
+              else  
+                return "Death rate : "+ data.Death + " (Deaths/1,000 population)";
+            })
+
+           })
+          .on('click' , function(data){
+            alert(data.properties.name);
+          })
+          .on('mouseout', function(data) {
+            d3.select(this).attr('fill', 'rgba(128,124,139,0.61)');
+
+            $("#country").text(function(){
+              return "" ;
+            });
+            $("#birth").text(function(){
+              return "";
+            })
+            $("#death").text(function(){
+              return "";
+            })
+
+          })
+          .attr('fill', 'rgba(128,124,139,0.61)')
+          .attr('stroke', 'rgba(255,255,255,1)')
+          .attr('stroke-width', 1);
+
+          console.log(hdi2013);
+      });
+      /*
+      var myLocation = xy([121.3997, 23.5]);
+      svg.append('circle').attr('r', 15)
+        .attr('fill', 'url(#tip)')
+        .attr('transform', 'translate(' + myLocation[0] + ', ' + myLocation[1] + ')');
+      */
+    });
+
+  </script>
+</body>
+</html>
